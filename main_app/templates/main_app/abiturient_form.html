@@ -110,7 +110,7 @@
     border-left: 4px solid var(--primary);
   }
 
-  /* === 6. Чекбоксы и документы === */
+  /* === 6. Чекбоксы и документы (ОБЩИЕ СТИЛИ) === */
   .form-check {
     display: flex;
     align-items: center;
@@ -123,76 +123,31 @@
     width: 1.35rem;
     height: 1.35rem;
     cursor: pointer;
-    margin-top: 0; /* Центрирование относительно текста */
+    margin-top: 0;
     flex-shrink: 0;
   }
 
-  .form-check-label {
-    cursor: pointer;
-    font-weight: 600;
-    color: var(--text);
-    user-select: none;
+  /* ФИКС ДЛЯ ДОКУМЕНТОВ: выносим из медиа-запроса, чтобы работало на ПК */
+  .document-row .form-check-input {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex-shrink: 0;
   }
-
-  .document-row {
-    background: rgba(var(--primary-rgb), 0.04);
-    padding: 1.5rem;
-    border-radius: var(--radius);
-    margin-bottom: 1rem;
-    border: 2px dashed var(--border-color);
+  
+  .document-row .form-check {
+    padding-left: 0 !important;
+    margin-bottom: 0 !important; /* Убираем лишний отступ снизу */
   }
-
-  /* === 7. Кнопки действий === */
-  .form-actions {
-    display: flex;
-    gap: 1.5rem;
-    justify-content: center;
-    margin: 3rem 0;
-  }
-
-  /* === 8. Подсказки DaData (Suggestions) === */
-  .suggestions-suggestions {
-    background: var(--card-bg) !important;
-    color: var(--text) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: var(--radius) !important;
-    box-shadow: var(--shadow) !important;
-    font-family: inherit !important;
-    z-index: 9999 !important;
-  }
-
-  .suggestions-suggestion:hover {
-    background: var(--primary-light) !important;
-    color: #fff !important;
-  }
-
-  [data-theme="dark"] .suggestions-suggestions {
-    background: #1a1a1e !important;
-    border-color: #333 !important;
-  }
-
-  [data-theme="dark"] .suggestions-hint { color: #666 !important; }
-  [data-theme="dark"] .suggestions-promo { display: none !important; }
 
   /* === 9. Адаптивность === */
   @media (max-width: 768px) {
-    .form-card {
-      padding: 1.5rem;
-    }
-    
-    h1.form-title {
-      font-size: 1.6rem;
-    }
-
-    .form-actions {
-      flex-direction: column-reverse; /* Кнопка сохранить сверху на мобилках */
-      gap: 1rem;
-    }
-
-    .form-actions .btn {
-      width: 100%;
-      padding: 0.8rem;
-    }
+    .form-card { padding: 1.5rem; }
+    h1.form-title { font-size: 1.6rem; }
+    .form-actions { flex-direction: column-reverse; gap: 1rem; }
+    .form-actions .btn { width: 100%; padding: 0.8rem; }
+  }
   }
 </style>
 {% endblock %}
@@ -326,26 +281,44 @@
       </div>
     </div>
 
-     <!-- 4. Документы -->
+    <!-- 4. Документы (ИТОГОВЫЙ ФИКС ДИЗАЙНА) -->
     <div class="form-card">
       <div class="form-section-title"><i class="fa-solid fa-file-arrow-up"></i> Документы</div>
       {{ formset.management_form }}
       <div id="document-formset">
         {% for doc_form in formset %}
-          <div class="document-row">
+          <div class="document-row mb-3 p-3 border rounded shadow-sm">
             {% for hidden in doc_form.hidden_fields %}{{ hidden }}{% endfor %}
-            <div class="row align-items-center">
-              <div class="col-md-8">
-                {{ doc_form.scan|add_class:"form-control" }}
+            
+            {% if doc_form.errors %}
+              <div class="alert alert-danger p-2 small">
+                {{ doc_form.errors }}
               </div>
-              {% if doc_form.instance.pk %}
-                <div class="col-md-4 text-end">
-                  <div class="form-check d-inline-flex">
-                    {{ doc_form.DELETE|add_class:"form-check-input" }}
-                    <label class="form-check-label text-danger fw-bold">Удалить</label>
+            {% endif %}
+            <div class="row g-3 align-items-center"> 
+              <div class="col-md-4">
+                <label class="small fw-bold mb-1 text-muted d-block">Тип документа <span class="text-danger">*</span></label>
+                {{ doc_form.type|add_class:"form-select form-select-sm" }}
+              </div>
+              <div class="col-md-5">
+                <label class="small fw-bold mb-1 text-muted d-block">Файл (скан/фото)</label>
+                {{ doc_form.scan|add_class:"form-control form-control-sm" }}
+              </div>
+              <div class="col-md-3 ps-lg-4">
+                <div class="d-flex flex-column gap-2 justify-content-center">
+                  <div class="form-check d-flex align-items-center gap-2 m-0 p-0">
+                    {{ doc_form.available|add_class:"form-check-input mt-0" }}
+                    <label class="form-check-label small fw-bold mb-0 text-nowrap">Наличие</label>
                   </div>
+                  {% if doc_form.instance.pk %}
+                    <div class="form-check d-flex align-items-center gap-2 m-0 p-0">
+                      {{ doc_form.DELETE|add_class:"form-check-input mt-0 border-danger" }}
+                      <label class="form-check-label text-danger fw-bold small mb-0 text-nowrap">Удалить</label>
+                    </div>
+                  {% endif %}
+
                 </div>
-              {% endif %}
+              </div>
             </div>
           </div>
         {% endfor %}

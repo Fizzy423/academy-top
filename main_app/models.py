@@ -2,6 +2,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+# Импортируем наши валидаторы
+from validators import validate_file_extension, validate_file_size 
 
 # ---- ОПРЕДЕЛЕНИЯ МОДЕЛЕЙ ----
 
@@ -122,7 +124,16 @@ class Document(models.Model):
     abiturient = models.ForeignKey(Abiturient, on_delete=models.CASCADE, related_name='documents', verbose_name="Абитуриент")
     type = models.CharField(max_length=50, choices=DOCUMENT_TYPES, verbose_name="Тип документа")
     available = models.BooleanField(default=False, verbose_name="Доступен")
-    scan = models.FileField(upload_to='documents/', blank=True, null=True, verbose_name="Скан документа")
+    
+    # ПРИМЕНЯЕМ ВАЛИДАТОРЫ ЗДЕСЬ:
+    scan = models.FileField(
+        upload_to='documents/', 
+        blank=True, 
+        null=True, 
+        verbose_name="Скан документа",
+        validators=[validate_file_extension, validate_file_size] # Добавлено
+    )
+    
     description = models.TextField(blank=True, verbose_name="Описание документа")
     upload_date = models.DateTimeField(default=timezone.now, verbose_name="Дата загрузки")
 
