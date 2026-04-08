@@ -65,6 +65,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
+  align-items: start; /* ← добавь это */
 }
 
 .dashboard-card {
@@ -114,6 +115,12 @@
 .dashboard-card .card-actions a:hover { background: var(--primary); color: white !important; }
 
 /* === 5. СПИСКИ === */
+.dashboard-card.last-items {
+  min-height: 200px;
+  max-height: 280px;
+  align-self: start; 
+
+}
 .dashboard-card.last-items ul { list-style: none; padding: 0; margin: 0; }
 .dashboard-card.last-items li {
   margin-bottom: 0.8rem;

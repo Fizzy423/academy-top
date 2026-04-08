@@ -75,8 +75,8 @@ def dashboard(request):
     context = {
         'abiturient_count': Abiturient.objects.count(),
         'dogovor_count': Dogovor.objects.count(),
-        'recent_abiturients': Abiturient.objects.all().order_by('-pk')[:10],
-        'recent_dogovors': Dogovor.objects.all().order_by('-date_of_conclusion')[:10],
+        'recent_abiturients': Abiturient.objects.all().order_by('-pk')[:3],
+        'recent_dogovors': Dogovor.objects.all().order_by('-pk')[:3],
         'has_any_search_data': Abiturient.objects.exists() or Dogovor.objects.exists(), 
     }
     return render(request, 'main_app/dashboard.html', context)

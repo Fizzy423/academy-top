@@ -171,7 +171,13 @@
           </div>
         </div>
       </div>
-
+      <div class="mb-3">
+      <label class="form-label">{{ form.payment_form.label }}</label>
+      {{ form.payment_form|add_class:"form-select" }}
+      {% for error in form.payment_form.errors %}
+      <div class="text-danger">{{ error }}</div>
+      {% endfor %}
+</div>
       <!-- Автоматический вывод остальных полей -->
       {% for field in form %}
         {% if field.name not in 'abiturient roditel_zakazchik number date_of_conclusion maternity_capital credit budget is_paid pay_type payment_form' %}

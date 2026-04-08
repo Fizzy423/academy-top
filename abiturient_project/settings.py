@@ -3,7 +3,6 @@ from pathlib import Path
 from dotenv import load_dotenv  
 
 # --- 0. ЗАГРУЗКА ОКРУЖЕНИЯ ---
-# Загружает переменные из файла .env (если он есть)
 load_dotenv()
 
 # Путь к проекту
@@ -11,7 +10,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- 1. ОСНОВНЫЕ НАСТРОЙКИ БЕЗОПАСНОСТИ ---
 
-# Сначала определяем DEBUG, чтобы использовать его в условиях ниже
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
 # Получаем SECRET_KEY из окружения
@@ -26,14 +24,13 @@ if not SECRET_KEY:
         raise ValueError("DJANGO_SECRET_KEY must be set in production (check your .env file)!")
 
 # Динамическая настройка разрешенных хостов
-# В .env пиши: DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',')
 
 
 # --- 2. ПРИЛОЖЕНИЯ ---
 INSTALLED_APPS = [
-    'dal',             # Должен быть выше django.contrib.admin
-    'dal_select2',     # Должен быть выше django.contrib.admin
+    'dal',            
+    'dal_select2',     
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -48,7 +45,6 @@ INSTALLED_APPS = [
     'guardian',
     'widget_tweaks',
 
-    # Ваше приложение
     'main_app',
 ]
 
@@ -56,7 +52,7 @@ INSTALLED_APPS = [
 # --- 3. MIDDLEWARE ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Для работы со статикой
+    'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -154,7 +150,7 @@ if not DEBUG:
 
     # SSL и HSTS
     SECURE_SSL_REDIRECT = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 год
+    SECURE_HSTS_SECONDS = 31536000  
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
