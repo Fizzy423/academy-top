@@ -33,5 +33,5 @@
 1. **Клонируйте репозиторий:**
 
 ```bash
-git clone https://github.com/Fizzy423/django-diploma.git
-cd django-diploma
+git clone https://github.com/Fizzy423/academy-top.git
+cd academy-top
