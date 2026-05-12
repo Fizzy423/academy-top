@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Сводный отчет по статистике{% endblock %}
+
+{% block extra_head %}
+<style>
+    .stats-container { max-width: 1100px; margin: 2rem auto; }
+    .report-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        height: 100%;
+    }
+    .stat-value { font-size: 2.5rem; font-weight: 800; color: var(--primary); }
+    .stat-label { font-size: 1rem; color: var(--text-muted); font-weight: 600; }
+    
+    .table-custom { width: 100%; margin-top: 1rem; }
+    .table-custom th { color: var(--primary); font-size: 0.85rem; text-transform: uppercase; border-bottom: 2px solid var(--border-color); padding: 10px; }
+    .table-custom td { padding: 12px 10px; border-bottom: 1px solid var(--border-color); }
+
+    @media print {
+        .no-print { display: none !important; }
+        .report-card { border: none; box-shadow: none; }
+        body { background: white; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stats-container">
+    <!-- Кнопки управления -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <a href="{% url 'report_center' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa-solid fa-arrow-left me-2"></i>Назад в центр отчетов
+        </a>
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="fa-solid fa-print me-2"></i>Распечатать отчет
+        </button>
+    </div>
+
+    <div class="text-center mb-5">
+        <h1 class="fw-bold">Сводный аналитический отчет</h1>
+        <p class="text-muted">Актуальные данные на {{ generated_date|date:"d.m.Y H:i" }}</p>
+    </div>
+
+    <!-- Основные цифры -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="report-card text-center">
+                <div class="stat-value">{{ total_abiturients }}</div>
+                <div class="stat-label">Всего абитуриентов</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="report-card text-center">
+                <div class="stat-value" style="color: var(--accent);">{{ total_students }}</div>
+                <div class="stat-label">Зачислено студентов</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="report-card text-center">
+                <div class="stat-value" style="color: #f59e0b;">{{ total_dogovors }}</div>
+                <div class="stat-label">Заключено договоров</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- По специальностям -->
+        <div class="col-md-7">
+            <div class="report-card">
+                <h3 class="h5 mb-3"><i class="fa-solid fa-graduation-cap me-2 text-primary"></i>По специальностям</h3>
+                <table class="table-custom">
+                    <thead>
+                        <tr><th>Специальность</th><th class="text-end">Кол-во</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in by_specialnost %}
+                        <tr>
+                            <td>{{ item.specialnost__name|default:"Не указана" }}</td>
+                            <td class="text-end fw-bold">{{ item.count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" class="text-center text-muted">Нет данных</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- По формам оплаты -->
+        <div class="col-md-5">
+            <div class="report-card">
+                <h3 class="h5 mb-3"><i class="fa-solid fa-wallet me-2 text-primary"></i>Формы оплаты</h3>
+                <table class="table-custom">
+                    <thead>
+                        <tr><th>Тип оплаты</th><th class="text-end">Договоров</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in by_payment_form %}
+                        <tr>
+                            <td>
+                                {% if item.payment_form == 'monthly' %}Помесячно
+                                {% elif item.payment_form == 'semester' %}По семестрам
+                                {% elif item.payment_form == 'yearly' %}За год
+                                {% else %}{{ item.payment_form }}{% endif %}
+                            </td>
+                            <td class="text-end fw-bold">{{ item.count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" class="text-center text-muted">Нет данных</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

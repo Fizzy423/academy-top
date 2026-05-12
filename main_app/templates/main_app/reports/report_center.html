@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Центр отчетов{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Основной контейнер */
+    .reports-container {
+        max-width: 900px; /* Уменьшили макс. ширину, чтобы две карточки не разъезжались слишком далеко */
+        margin: 3rem auto;
+        padding: 0 1rem;
+    }
+
+    .center-title {
+        font-weight: 900;
+        color: var(--text);
+        margin-bottom: 3rem;
+        text-align: center;
+    }
+
+    /* Карточки отчетов */
+    .report-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 2.5rem 2rem;
+        box-shadow: var(--dashboard-shadow);
+    }
+
+    .report-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(var(--primary-rgb), 0.2);
+        border-color: var(--primary);
+    }
+
+    .report-icon {
+        font-size: 3.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .report-card h3 {
+        color: var(--text);
+        font-weight: 800;
+        margin-bottom: 1rem;
+    }
+
+    .report-description {
+        color: var(--text);
+        opacity: 0.7;
+        font-size: 0.95rem;
+        margin-bottom: 2rem;
+        line-height: 1.5;
+        min-height: 60px; /* Чтобы текст в карточках был одной высоты */
+    }
+
+    .btn-report {
+        border-radius: 12px;
+        padding: 0.8rem 1.5rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: none;
+        transition: 0.3s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-report:hover {
+        transform: scale(1.05);
+        filter: brightness(1.1);
+        color: white !important;
+    }
+
+    .btn-excel { background-color: #10b981; color: white !important; }
+    .btn-stats { background-color: var(--primary); color: white !important; }
+
+    .back-link {
+        text-align: center;
+        margin-top: 3rem;
+    }
+    .back-link a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .back-link a:hover { color: var(--primary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container reports-container">
+    <h1 class="center-title">📊 Аналитический центр AcademyTOP</h1>
+
+    <!-- Добавили row и justify-content-center, чтобы карточки были по центру -->
+    <div class="row g-4 justify-content-center">
+        
+        <!-- EXCEL ОТЧЕТ (col-md-5 сделает их чуть шире и солиднее) -->
+        <div class="col-md-6 col-lg-5">
+            <div class="report-card text-center">
+                <div>
+                    <i class="fa-solid fa-file-excel report-icon text-success"></i>
+                    <h3>Экспорт договоров</h3>
+                    <p class="report-description">Полная выгрузка данных по заключенным договорам в формат Excel для бухгалтерии.</p>
+                </div>
+                <a href="{% url 'report_dogovors_excel' %}" class="btn btn-report btn-excel">Скачать Excel</a>
+            </div>
+        </div>
+
+        <!-- АНАЛИТИКА -->
+        <div class="col-md-6 col-lg-5">
+            <div class="report-card text-center">
+                <div>
+                    <i class="fa-solid fa-chart-line report-icon text-primary"></i>
+                    <h3>Статистика за год</h3>
+                    <p class="report-description">Визуальный срез данных: популярные специальности, формы оплаты и динамика зачислений.</p>
+                </div>
+                <a href="{% url 'report_dashboard_summary' %}" class="btn btn-report btn-stats">Посмотреть</a>
+            </div>
+        </div>
+
+    </div> <!-- Конец row -->
+
+    <div class="back-link">
+        <a href="{% url 'dashboard' %}"><i class="fa-solid fa-arrow-left me-2"></i>Вернуться на главную</a>
+    </div>
+</div>
+{% endblock %}

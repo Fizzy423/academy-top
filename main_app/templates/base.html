@@ -687,13 +687,23 @@
           <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}"
           {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>Главная</a>        
         </li>
+        
         <li class="nav-item">
           <a class="nav-link {% if request.resolver_match.url_name == 'abiturient_list' %}active{% endif %}" href="{% url 'abiturient_list' %}"
           {% if request.resolver_match.url_name == 'abiturient_list' %}aria-current="page"{% endif %}>Абитуриенты</a>
         </li>
+        
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'student_list' %}active{% endif %}" href="{% url 'student_list' %}"
+          {% if request.resolver_match.url_name == 'student_list' %}aria-current="page"{% endif %}>Студенты</a>
+        </li>
+        
         <li class="nav-item">
           <a class="nav-link {% if request.resolver_match.url_name == 'dogovor_list' %}active{% endif %}" href="{% url 'dogovor_list' %}"
           {% if request.resolver_match.url_name == 'dogovor_list' %}aria-current="page"{% endif %}>Договоры</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if 'report' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'report_center' %}">Отчеты</a>
         </li>
       </ul>
 

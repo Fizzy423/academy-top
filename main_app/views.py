@@ -26,8 +26,52 @@ from .models import (
 # Импорты форм
 from .forms import (
     AbiturientForm, RoditelForm, DocumentForm,
-    DogovorForm, CustomAuthForm, ZdorovieForm
+    DogovorForm, CustomAuthForm, ZdorovieForm,
+    StudentEnrollForm  
 )
+
+def report_center(request):
+    """Страница выбора параметров отчета"""
+    specialties = Specialnost.objects.all()
+    statuses = Abiturient.STATUS_CHOICES
+    
+    context = {
+        'specialties': specialties,
+        'statuses': statuses,
+    }
+    return render(request, 'main_app/reports/report_center.html', context)
+
+def generate_report_view(request):
+    """Генерация отчета по фильтрам"""
+    # Получаем данные из GET-запроса
+    status = request.GET.get('status')
+    specialty_id = request.GET.get('specialty')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+
+    # Стартовый запрос
+    abiturients = Abiturient.objects.all()
+
+    # Фильтруем
+    if status:
+        abiturients = abiturients.filter(status=status)
+    if specialty_id:
+        abiturients = abiturients.filter(specialnost_id=specialty_id)
+    if date_from:
+        abiturients = abiturients.filter(enrollment_date__gte=date_from)
+    if date_to:
+        abiturients = abiturients.filter(enrollment_date__lte=date_to)
+
+    context = {
+        'abiturients': abiturients,
+        'generated_date': timezone.now(),
+        'total_count': abiturients.count(),
+        'by_class': {
+            '9': abiturients.filter(class_of_entry='9').count(),
+            '11': abiturients.filter(class_of_entry='11').count(),
+        }
+    }
+    return render(request, 'main_app/reports/abiturient_report.html', context)
 
 # -----------------------------
 # Вспомогательные функции и миксины
@@ -102,6 +146,13 @@ class AbiturientListView(LoginRequiredMixin, StaffRequiredMixin, FilterView):
     template_name = 'main_app/abiturient_list.html'
     context_object_name = 'abiturients'
 
+class StudentListView(AbiturientListView):
+    """Список только тех, кто уже зачислен (статус 'student')"""
+    template_name = 'main_app/student_list.html' 
+    context_object_name = 'students'
+
+    def get_queryset(self):
+        return Abiturient.objects.filter(status='student')
 class AbiturientDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
     model = Abiturient
     template_name = 'main_app/abiturient_detail.html'
@@ -213,6 +264,27 @@ class DogovorCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
             initial['abiturient'] = get_object_or_404(Abiturient, pk=abiturient_id)
         return initial
 
+    def form_valid(self, form):
+        # 1. Сохраняем договор (вызываем стандартное поведение)
+        response = super().form_valid(form)
+        
+        # 2. Получаем абитуриента, с которым заключили договор
+        abiturient = self.object.abiturient
+        
+        # 3. Если он еще не студент — переводим его в студенты
+        if abiturient.status == 'abiturient':
+            abiturient.status = 'student'
+            abiturient.enrollment_date = timezone.now().date()
+            abiturient.save()
+            
+            # Добавляем красивое уведомление
+            messages.success(self.request, f"Договор сохранен! {abiturient.fio} автоматически зачислен(а) в студенты.")
+        else:
+            messages.success(self.request, "Договор успешно добавлен.")
+            
+        return response
+    # -----------------------
+
     def get_success_url(self):
         return reverse_lazy('abiturient_detail', kwargs={'pk': self.object.abiturient.pk})
 
@@ -234,17 +306,21 @@ class DogovorDeleteView(LoginRequiredMixin, StaffRequiredMixin, DeleteView):
 # --------------------
 @login_required
 @user_passes_test(is_staff_check)
-@require_POST
 def enroll_student(request, pk):
-    """Перевод абитуриента в студенты"""
     abiturient = get_object_or_404(Abiturient, pk=pk)
-    if abiturient.status == 'abiturient':
-        abiturient.status = 'student'
-        abiturient.enrollment_date = timezone.now().date()
-        abiturient.save()
-        messages.success(request, f"{abiturient.fio} зачислен в студенты!")
-    else:
-        messages.warning(request, f"{abiturient.fio} уже имеет статус {abiturient.get_status_display()}")
+    
+    if request.method == 'POST':
+        form = StudentEnrollForm(request.POST, instance=abiturient)
+        if form.is_valid():
+            student = form.save(commit=False)
+            student.status = 'student'
+            if not student.enrollment_date:
+                student.enrollment_date = timezone.now().date()
+            student.save()
+            messages.success(request, f"{student.fio} официально зачислен в группу {student.student_group}!")
+            return redirect('abiturient_detail', pk=pk)
+    
+    # Если зашли просто так (GET), перекинем обратно
     return redirect('abiturient_detail', pk=pk)
 
 # --------------------

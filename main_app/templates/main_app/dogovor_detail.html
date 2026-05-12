@@ -218,5 +218,40 @@
     </div>
   </div>
 
+  {% if object.status == 'abiturient' %}
+    <!-- Кнопка вызова модального окна -->
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#enrollModal">
+        <i class="fa-solid fa-graduation-cap"></i> Зачислить в студенты
+    </button>
+
+    <!-- Модальное окно -->
+    <div class="modal fade" id="enrollModal" tabindex="-1">
+      <div class="modal-dialog">
+        <form method="post" action="{% url 'enroll_student' object.pk %}">
+          {% csrf_token %}
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Зачисление: {{ object.fio }}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Номер группы</label>
+                <input type="text" name="student_group" class="form-control" placeholder="Например: ПОВ-21" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Дата зачисления</label>
+                <input type="date" name="enrollment_date" class="form-control" value="{{ today|date:'Y-m-d' }}">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">Подтвердить зачисление</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+{% endif %}
+
 </div>
 {% endblock %}

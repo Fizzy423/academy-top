@@ -183,3 +183,23 @@ class DogovorForm(forms.ModelForm):
                     field.widget.attrs.update({'class': 'form-control'})
                 elif isinstance(field.widget, forms.Select):
                     field.widget.attrs.update({'class': 'form-select'})
+
+
+class StudentEnrollForm(forms.ModelForm):
+    class Meta:
+        model = Abiturient
+        fields = ['student_group', 'enrollment_date']
+        labels = {
+            'student_group': 'Номер группы',
+            'enrollment_date': 'Дата зачисления',
+        }
+        widgets = {
+            'student_group': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placeholder': 'Например: ПОВ-24'
+            }),
+            'enrollment_date': forms.DateInput(attrs={
+                'type': 'date', 
+                'class': 'form-control'
+            }),
+        }

@@ -323,14 +323,12 @@
       <i class="fa-solid fa-arrow-left me-2"></i> К списку
     </a>
     <div class="ms-auto d-flex gap-2">
-      <!-- Кнопка зачисления (только для абитуриентов) -->
+      
+      <!-- Кнопка вызова модального окна зачисления -->
       {% if object.status == 'abiturient' %}
-      <form method="POST" action="{% url 'enroll_student' object.pk %}" style="display: inline;">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-enroll" onclick="return confirm('Зачислить {{ object.fio }} в студенты?')">
-          <i class="fa-solid fa-graduation-cap me-2"></i> Зачислить
-        </button>
-      </form>
+      <button type="button" class="btn btn-enroll" data-bs-toggle="modal" data-bs-target="#enrollModal">
+        <i class="fa-solid fa-graduation-cap me-2"></i> Зачислить
+      </button>
       {% endif %}
       
       <a href="{% url 'abiturient_update' object.pk %}" class="btn btn-edit">
@@ -342,5 +340,37 @@
     </div>
   </div>
 
-</div>
+  <!-- МОДАЛЬНОЕ ОКНО ЗАЧИСЛЕНИЯ -->
+  {% if object.status == 'abiturient' %}
+  <div class="modal fade" id="enrollModal" tabindex="-1" aria-labelledby="enrollModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius);">
+        <form method="POST" action="{% url 'enroll_student' object.pk %}">
+          {% csrf_token %}
+          <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+            <h5 class="modal-title" id="enrollModalLabel" style="color: var(--primary); font-weight: 800;">Зачисление студента</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted">Укажите данные для перевода <strong>{{ object.fio }}</strong> в статус студента.</p>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold small text-uppercase">Учебная группа</label>
+              <input type="text" name="student_group" class="form-control" placeholder="Например: ПОВ-24" required>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold small text-uppercase">Дата зачисления</label>
+              <input type="date" name="enrollment_date" class="form-control" value="{% now 'Y-m-d' %}">
+            </div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="submit" class="btn btn-enroll">Подтвердить зачисление</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 {% endblock %}

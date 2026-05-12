@@ -1,42 +1,49 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Отчет по абитуриентам</title>
     <style>
-        body { font-family: DejaVu Sans, sans-serif; margin: 40px; }
-        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-        .summary { background: #ecf0f1; padding: 15px; border-radius: 8px; margin: 20px 0; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #3498db; color: white; }
-        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #7f8c8d; }
+        /* Теперь это должно работать без ошибок доступа */
+        @font-face {
+            font-family: 'DejaVuSans';
+            src: url("{% static 'fonts/DejaVuSans.ttf' %}");
+        }
+
+        @font-face {
+            font-family: 'DejaVuSans-Bold';
+            src: url("{% static 'fonts/DejaVuSans-Bold.ttf' %}");
+        }
+
+        body { 
+            font-family: 'DejaVuSans', sans-serif; 
+        }
+        h1, th { 
+            font-family: 'DejaVuSans-Bold', sans-serif; 
+        }
     </style>
 </head>
 <body>
     <h1>Отчет по абитуриентам</h1>
-    <div class="summary">
-        <p><strong>Дата формирования:</strong> {{ generated_date|date:"d.m.Y H:i" }}</p>
-        <p><strong>Всего абитуриентов:</strong> {{ total_count }}</p>
-        <p><strong>Из них:</strong> 9 класс - {{ by_class.9 }}, 11 класс - {{ by_class.11 }}</p>
-    </div>
+    <p>Дата формирования: {{ generated_date|date:"d.m.Y H:i" }}</p>
     
     <table>
         <thead>
-            <tr><th>ФИО</th><th>Дата рождения</th><th>Класс</th><th>Специальность</th><th>Телефон</th></tr>
+            <tr>
+                <th>ФИО</th>
+                <th>Класс</th>
+                <th>Телефон</th>
+            </tr>
         </thead>
         <tbody>
             {% for a in abiturients %}
             <tr>
                 <td>{{ a.fio }}</td>
-                <td>{{ a.date_of_birth|date:"d.m.Y" }}</td>
                 <td>{{ a.class_of_entry }}</td>
-                <td>{{ a.specialnost.name|default:"Не указана" }}</td>
                 <td>{{ a.phone }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    <div class="footer">Система AcademyTOP • Автоматизированный отчет</div>
 </body>
 </html>

@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Список абитуриентов{% endblock %}
+{% block title %}Список студентов{% endblock %}
 
 {% block extra_head %}
 <style>
-  /* === Основной контейнер === */
+  /* === ТЕ ЖЕ СТИЛИ, ЧТО И У АБИТУРИЕНТОВ === */
   .form-wrapper {
     max-width: 1200px;
     margin: 1rem auto 2rem;
@@ -19,36 +19,34 @@
     text-align: center;
   }
 
-  /* === Верхняя панель действий === */
   .list-toolbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
     gap: 1rem;
-    flex-wrap: wrap; /* Чтобы на мобилках кнопка переносилась */
+    flex-wrap: wrap; 
   }
 
-  /* === Стилизация таблицы-карточки === */
   .table-container {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
-    padding: 1rem; /* Уменьшил padding для мобильности */
+    padding: 1rem; 
     box-shadow: var(--shadow);
   }
 
   .custom-table {
     width: 100%;
     border-collapse: separate;
-    border-spacing: 0 10px; /* Увеличил зазор между строками */
+    border-spacing: 0 10px; 
   }
 
   .custom-table thead th {
     font-size: 0.8rem;
     font-weight: 700;
     text-transform: uppercase;
-    color: var(--primary);
+    color: var(--primary); /* Возвращаем основной цвет */
     padding: 0.5rem 1rem;
     border: none;
     letter-spacing: 1px;
@@ -66,7 +64,6 @@
     color: var(--text);
   }
 
-  /* Закругление углов для строк */
   .custom-table tbody td:first-child {
     border-left: 1px solid var(--border-color);
     border-radius: 12px 0 0 12px;
@@ -85,7 +82,6 @@
     border-color: var(--primary);
   }
 
-  /* Ссылка ФИО */
   .fio-link {
     font-weight: 700;
     color: var(--text);
@@ -94,6 +90,7 @@
   }
   .fio-link:hover { color: var(--primary); }
 
+  /* Одинаковая плашка для класса и для группы */
   .badge-class {
     background: var(--primary);
     color: white;
@@ -104,7 +101,6 @@
     white-space: nowrap;
   }
 
-  /* === Кнопки действий === */
   .btn-action {
     width: 36px;
     height: 36px;
@@ -118,15 +114,10 @@
   .btn-edit { background: rgba(var(--primary-rgb), 0.1); color: var(--primary) !important; }
   .btn-edit:hover { background: var(--primary); color: white !important; }
 
-  .btn-delete { background: rgba(239, 68, 68, 0.1); color: #ef4444 !important; }
-  .btn-delete:hover { background: #ef4444; color: white !important; }
-
-  /* ТЕМНАЯ ТЕМА (Исправлено) */
   [data-theme="dark"] .custom-table tbody td {
     background: rgba(255, 255, 255, 0.03);
   }
 
-  /* Пагинация */
   .pagination .page-link {
     background: var(--card-bg);
     color: var(--text);
@@ -143,93 +134,78 @@
   }
 
   @media (max-width: 768px) {
-    .custom-table thead { display: none; } /* Скрываем заголовки на мобилках */
+    .custom-table thead { display: none; } 
     .custom-table tbody td { display: block; text-align: left !important; border: none; padding: 0.5rem 1rem; }
     .custom-table tbody td:first-child { border-top: 1px solid var(--border-color); border-radius: 12px 12px 0 0; padding-top: 1rem; }
     .custom-table tbody td:last-child { border-bottom: 1px solid var(--border-color); border-radius: 0 0 12px 12px; padding-bottom: 1rem; }
     .custom-table tbody tr:hover { transform: none; }
   }
 
-  /* Стили для пустого состояния (когда нет данных) */
-  .empty-state {
-    color: var(--text);
-  }
-
-  .empty-state-icon {
-    color: var(--text);
-    opacity: 0.3; /* Легкая прозрачность для иконки */
-    margin-bottom: 1rem;
-  }
-
-  .empty-state-text {
-    color: var(--text);
-    opacity: 0.7; /* Чуть более приглушенный текст, чем основной */
-    margin-bottom: 1.5rem;
-  }
-
-  /* Настройка для темной темы, если нужно еще подправить */
-  [data-theme="dark"] .empty-state-icon {
-    opacity: 0.5; /* В темной теме делаем иконку чуть заметнее */
-  }
-
-  /* Исправление для надписи "Найдено:" в тулбаре */
-  .list-toolbar .text-muted {
-    color: var(--text) !important;
-    opacity: 0.8;
-  }
+  .empty-state { color: var(--text); }
+  .empty-state-icon { color: var(--text); opacity: 0.3; margin-bottom: 1rem; }
+  .empty-state-text { color: var(--text); opacity: 0.7; margin-bottom: 1.5rem; }
+  [data-theme="dark"] .empty-state-icon { opacity: 0.5; }
+  .list-toolbar .text-muted { color: var(--text) !important; opacity: 0.8; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="form-wrapper">
   <h1 class="form-title">
-    <i class="fa-solid fa-users-viewfinder me-2"></i>Список абитуриентов
+    <!-- Убрали зеленый цвет у иконки, теперь она стандартная -->
+    <i class="fa-solid fa-user-tie me-2"></i>Реестр студентов
   </h1>
 
   <div class="list-toolbar">
     <div class="text-muted">
-        Найдено: <span class="badge bg-secondary text-white">{{ paginator.count }}</span>
+        Найдено: <span class="badge bg-secondary text-white">{{ paginator.count|default:"0" }}</span>
     </div>
-    <a href="{% url 'abiturient_create' %}" class="btn btn-primary shadow-sm">
-      <i class="fa-solid fa-plus-circle me-2"></i> Добавить
+    <!-- Кнопка перехода к абитуриентам в стиле основной кнопки -->
+    <a href="{% url 'abiturient_list' %}" class="btn btn-primary shadow-sm">
+      <i class="fa-solid fa-users me-2"></i> К абитуриентам
     </a>
   </div>
 
   <div class="table-container">
-    {% if abiturients %}
+    {% if students %}
     <div class="table-responsive">
       <table class="custom-table">
         <thead>
           <tr>
             <th>ФИО</th>
-            <th class="text-center">Дата рождения</th>
-            <th class="text-center">Класс</th>
+            <th class="text-center">Группа</th>
+            <th class="text-center">Дата зачисления</th>
             <th class="text-center">Телефон</th>
             <th class="text-end">Действия</th>
           </tr>
         </thead>
         <tbody>
-          {% for abiturient in abiturients %}
+          {% for student in students %}
           <tr>
             <td>
-              <a href="{% url 'abiturient_detail' abiturient.pk %}" class="fio-link">
-                {{ abiturient.fio }}
+              <a href="{% url 'abiturient_detail' student.pk %}" class="fio-link">
+                {{ student.fio }}
               </a>
             </td>
             <td class="text-center">
-                <span class="d-md-none text-muted small">ДР: </span>{{ abiturient.date_of_birth|date:"d.m.Y" }}
+              <!-- Используем badge-class, чтобы плашка была точно такой же, как у "Класса" -->
+              <span class="badge-class">
+                {% if student.student_group %}{{ student.student_group }}{% else %}Без группы{% endif %}
+              </span>
             </td>
             <td class="text-center">
-              <span class="badge-class">{{ abiturient.class_of_entry }} класс</span>
+                <span class="d-md-none text-muted small">Зачислен: </span>
+                {% if student.enrollment_date %}
+                    {{ student.enrollment_date|date:"d.m.Y" }}
+                {% else %}
+                    —
+                {% endif %}
             </td>
-            <td class="text-center">{{ abiturient.phone }}</td>
+            <td class="text-center">{{ student.phone }}</td>
             <td class="text-end">
               <div class="d-flex justify-content-end gap-2">
-                <a href="{% url 'abiturient_update' abiturient.pk %}" class="btn-action btn-edit" title="Редактировать">
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </a>
-                <a href="{% url 'abiturient_delete' abiturient.pk %}" class="btn-action btn-delete" title="Удалить">
-                  <i class="fa-solid fa-trash"></i>
+                <a href="{% url 'abiturient_detail' student.pk %}" class="btn-action btn-edit" title="Личное дело">
+                  <i class="fa-solid fa-folder-open"></i>
                 </a>
               </div>
             </td>
@@ -267,8 +243,8 @@
 
     {% else %}
     <div class="text-center py-5 empty-state">
-      <i class="fa-solid fa-folder-open fa-3x empty-state-icon"></i>
-      <p class="empty-state-text">Абитуриенты еще не добавлены в базу.</p>
+      <i class="fa-solid fa-graduation-cap fa-3x empty-state-icon"></i>
+      <p class="empty-state-text">Пока нет зачисленных студентов.</p>
     </div>
     {% endif %}
   </div>

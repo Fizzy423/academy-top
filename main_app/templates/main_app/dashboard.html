@@ -26,7 +26,6 @@
 }
 .dashboard-container a:hover { opacity: 0.8; }
 
-/* Убираем линию под кнопками-ссылками из base.html */
 .dashboard-card .card-actions a::after { display: none !important; }
 
 .text-muted { color: var(--text-muted) !important; }
@@ -55,17 +54,16 @@
 
 /* === 4. КАРТОЧКИ === */
 .dashboard-main-cards {
-  display: flex;
-  justify-content: center;
+  display: grid; /* ИЗМЕНЕНО: теперь карточки будут строго одинаковой ширины */
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
-  flex-wrap: wrap;
 }
 
 .dashboard-other-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
-  align-items: start; /* ← добавь это */
+  align-items: start;
 }
 
 .dashboard-card {
@@ -119,7 +117,6 @@
   min-height: 200px;
   max-height: 280px;
   align-self: start; 
-
 }
 .dashboard-card.last-items ul { list-style: none; padding: 0; margin: 0; }
 .dashboard-card.last-items li {
@@ -133,7 +130,7 @@
 .dashboard-card.last-items a { font-weight: 500; font-size: 1.05rem; color: var(--text) !important; }
 .dashboard-card.last-items a i { color: var(--primary); width: 20px; text-align: center; margin-right: 10px;}
 
-/* === 6. НОВОСТИ / ЗАМЕТКИ (ОБНОВЛЕННЫЙ) === */
+/* === 6. НОВОСТИ / ЗАМЕТКИ === */
 .news-section {
   background: var(--card-bg);
   border-radius: var(--radius);
@@ -163,7 +160,13 @@
 .chart-card canvas { width: 100% !important; height: 350px !important; }
 
 /* === 8. ПОИСК === */
-.search-card.dashboard-card { overflow: visible !important; z-index: 10; }
+.search-card.dashboard-card { 
+  overflow: visible !important; 
+  z-index: 10; 
+  min-height: 200px; /* Задаем такую же высоту, как у соседних карточек */
+  justify-content: flex-start; /* Прижимаем поиск к верху */
+  gap: 1rem; /* Добавляем красивый отступ между заголовком и полем */
+}
 .search-card input { width: 100%; padding: 0.8rem 1rem; border-radius: var(--radius); border: 2px solid var(--border-color); background-color: var(--card-bg); color: var(--text); }
 .autocomplete-items { display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 300px; overflow-y: auto; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0 0 var(--radius) var(--radius); box-shadow: var(--dashboard-shadow); z-index: 1500; }
 .autocomplete-item { padding: 0.75rem 1rem; cursor: pointer; color: var(--text) !important; border-bottom: 1px solid var(--border-color); }
@@ -190,6 +193,17 @@
         <a href="{% url 'abiturient_create' %}"><i class="fa-solid fa-plus me-2"></i>Добавить</a>
       </div>
     </div>
+    
+    <!-- ИЗМЕНЕНО: Убрал зеленую рамку border-top: 4px solid #10b981 -->
+    <div class="dashboard-card">
+      <i class="fa-solid fa-user-tie icon-bg" style="color: #10b981;"></i>
+      <h2>Студенты</h2>
+      <div class="count">{{ student_count }}</div>
+      <div class="card-actions">
+        <a href="{% url 'student_list' %}"><i class="fa-solid fa-eye me-2"></i>Список</a>
+      </div>
+    </div>
+    
     <div class="dashboard-card">
       <i class="fa-solid fa-file-contract icon-bg"></i>
       <h2>Договоры</h2>

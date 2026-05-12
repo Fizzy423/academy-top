@@ -4,11 +4,14 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
+from . import reports
+
 
 from main_app.views import (
     CustomLoginView, logout_view, dashboard,
     AbiturientListView, AbiturientDetailView, AbiturientCreateView, 
     AbiturientUpdateView, AbiturientDeleteView,
+    StudentListView, 
     DogovorListView, DogovorCreateView, DogovorDetailView, 
     DogovorUpdateView, DogovorDeleteView,
     DocumentCreateView,
@@ -16,6 +19,8 @@ from main_app.views import (
     search_students, search_students_legacy,
     AbiturientAutocomplete, RoditelAutocomplete, SpecialnostAutocomplete,
     get_abit_info_ajax,
+    report_center,          
+    generate_report_view,   
     enroll_student 
 )
 
@@ -51,6 +56,7 @@ urlpatterns = [
 
     # Абитуриенты и студенты
     path('abiturients/', AbiturientListView.as_view(), name='abiturient_list'),
+    path('students/', StudentListView.as_view(), name='student_list'), 
     path('abiturients/new/', AbiturientCreateView.as_view(), name='abiturient_create'),
     path('abiturients/<int:pk>/', AbiturientDetailView.as_view(), name='abiturient_detail'),
     path('abiturients/<int:pk>/edit/', AbiturientUpdateView.as_view(), name='abiturient_update'),
@@ -67,6 +73,13 @@ urlpatterns = [
 
     # Документы
     path('documents/new/', DocumentCreateView.as_view(), name='document_create'),
+
+     # --- ОТЧЕТЫ ---
+    path('reports/', report_center, name='report_center'),
+    path('reports/generate/', generate_report_view, name='generate_report'),
+    path('reports/abiturients/pdf/', reports.abiturient_report_pdf, name='report_abiturients_pdf'),
+    path('reports/dogovors/excel/', reports.dogovor_report_excel, name='report_dogovors_excel'),
+    path('reports/dashboard/summary/', reports.dashboard_report, name='report_dashboard_summary'),
 
     # AJAX / API
     path('api/parents_by_abiturient/<int:abiturient_id>/', 
