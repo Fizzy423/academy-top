@@ -1,7 +1,7 @@
 # main_app/reports.py
 
 import os
-import pandas as pd  # Исправляем ошибку "pd не определено"
+import pandas as pd  
 from django.conf import settings
 from django.shortcuts import render  
 from django.http import HttpResponse
@@ -25,12 +25,10 @@ os.environ['TMPDIR'] = settings.TMP_DIR
 def register_fonts():
     """Регистрируем шрифты так, чтобы xhtml2pdf их точно увидел"""
     try:
-        # Пытаемся найти файлы шрифтов
         regular_path = finders.find('fonts/DejaVuSans.ttf')
         bold_path = finders.find('fonts/DejaVuSans-Bold.ttf')
         
         if regular_path:
-            # Важно: используем абсолютный путь и нормализуем его
             reg_path = os.path.abspath(regular_path)
             pdfmetrics.registerFont(TTFont('DejaVuSans', reg_path))
             print(f"--- ШРИФТ ЗАРЕГИСТРИРОВАН: {reg_path}")
@@ -52,7 +50,6 @@ def link_callback(uri, rel):
     from django.conf import settings
     from django.contrib.staticfiles import finders
 
-    # Если uri — это путь к статике (начинается с /static/)
     if uri.startswith(settings.STATIC_URL):
         path = uri.replace(settings.STATIC_URL, "")
         find_result = finders.find(path)
@@ -63,7 +60,6 @@ def link_callback(uri, rel):
                 result = find_result
             return os.path.abspath(result)
             
-    # Если uri — это медиа (картинки пользователя)
     elif uri.startswith(settings.MEDIA_URL):
         path = uri.replace(settings.MEDIA_URL, "")
         result = os.path.join(settings.MEDIA_ROOT, path)
@@ -77,9 +73,9 @@ def render_to_pdf(template_src, context_dict):
     result = BytesIO()
     
     pdf = pisa.pisaDocument(
-        BytesIO(html.encode("utf-8")), # Кодируем строку в байты utf-8
+        BytesIO(html.encode("utf-8")), 
         result, 
-        encoding='utf-8',              # Указываем генератору кодировку
+        encoding='utf-8',              
         link_callback=link_callback
     )
     
