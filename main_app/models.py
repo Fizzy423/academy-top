@@ -54,8 +54,6 @@ class Abiturient(models.Model):
         ('9', '9 класс'),
         ('11', '11 класс'),
     ]
-    
-    # Добавляем статусы
     STATUS_CHOICES = [
         ('abiturient', 'Абитуриент'),
         ('student', 'Студент'),
@@ -73,8 +71,8 @@ class Abiturient(models.Model):
     address = models.CharField(max_length=255, verbose_name="Адрес")
     email = models.EmailField(verbose_name="Электронная почта")
     is_guardianship = models.BooleanField(default=False, verbose_name="Опекунство или сирота")
-    
-    # НОВЫЕ ПОЛЯ ДЛЯ СТАТУСА СТУДЕНТА
+    reg_number = models.PositiveIntegerField(verbose_name="Номер личного дела", null=True, blank=True)
+
     status = models.CharField(
         max_length=20, 
         choices=STATUS_CHOICES, 
@@ -136,14 +134,13 @@ class AbiturientRoditel(models.Model):
 
 class Document(models.Model):
     DOCUMENT_TYPES = [
-          ('package', 'Полный пакет документов (одним файлом)')
+    ('package', 'Полный пакет документов (одним файлом)')
     ]
 
     abiturient = models.ForeignKey(Abiturient, on_delete=models.CASCADE, related_name='documents', verbose_name="Абитуриент")
     type = models.CharField(max_length=50, choices=DOCUMENT_TYPES, verbose_name="Тип документа")
     available = models.BooleanField(default=False, verbose_name="Доступен")
     
-    # ПРИМЕНЯЕМ ВАЛИДАТОРЫ ЗДЕСЬ:
     scan = models.FileField(
         upload_to='documents/', 
         blank=True, 
@@ -172,10 +169,11 @@ class Dogovor(models.Model):
 
     number = models.CharField(max_length=50, unique=True, verbose_name="Номер договора")
     date_of_conclusion = models.DateField(default=timezone.now, verbose_name="Дата заключения")
-    payment_form = models.CharField(max_length=10, choices=PAYMENT_FORMS, default='monthly', verbose_name="Форма оплаты")  # Исправил default
+    payment_form = models.CharField(max_length=10, choices=PAYMENT_FORMS, default='monthly', verbose_name="Форма оплаты")  
     maternity_capital = models.BooleanField(default=False, verbose_name="Материнский капитал")
     credit = models.BooleanField(default=False, verbose_name="Кредит")
-
+    is_paid = models.BooleanField(default=False, verbose_name="Оплачено")
+    payment_date = models.DateField(null=True, blank=True, verbose_name="Дата оплаты")
     abiturient = models.ForeignKey(Abiturient, on_delete=models.CASCADE, related_name='dogovors', verbose_name="Абитуриент")
     roditel_zakazchik = models.ForeignKey(Roditel, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Родитель-заказчик")
 

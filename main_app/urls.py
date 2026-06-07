@@ -20,7 +20,8 @@ from main_app.views import (
     AbiturientAutocomplete, RoditelAutocomplete, SpecialnostAutocomplete,
     get_abit_info_ajax,
     report_center,          
-    generate_report_view,   
+    generate_report_view,  
+    download_dogovor_docx, 
     enroll_student 
 )
 
@@ -90,6 +91,8 @@ urlpatterns = [
     path('api/save_news/', save_news, name='save_news'),
     path('api/search_students_legacy/', search_students_legacy, name='search_students_legacy'),
     path('api/search_students/', search_students, name='search_students'),
+
+    path('dogovors/<int:pk>/download/', download_dogovor_docx, name='dogovor_download'),
 ]
 
 if settings.DEBUG:

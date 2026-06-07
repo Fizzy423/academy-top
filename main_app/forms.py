@@ -42,8 +42,6 @@ class RoditelForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-       
         if self.prefix == 'father':
             self.fields['fio'].widget.attrs['placeholder'] = 'Иванов Иван Иванович'
         elif self.prefix == 'mother':
@@ -137,7 +135,8 @@ class DogovorForm(forms.ModelForm):
         model = Dogovor
         fields = [
             'number', 'date_of_conclusion', 'payment_form', 
-            'maternity_capital', 'credit', 'abiturient', 'roditel_zakazchik'
+            'maternity_capital', 'credit', 'abiturient', 
+            'roditel_zakazchik', 'is_paid', 'payment_date' 
         ]
         
         labels = {
@@ -148,6 +147,8 @@ class DogovorForm(forms.ModelForm):
             'credit': 'Образовательный кредит (да/нет)',
             'abiturient': 'Абитуриент (студент)',
             'roditel_zakazchik': 'ФИО родителя (заказчика)',
+            'is_paid': 'Оплачено',
+            'payment_date': 'Дата оплаты',
         }
         widgets = {
             'abiturient': autocomplete.ModelSelect2(

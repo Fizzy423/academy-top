@@ -71,9 +71,9 @@ class DocumentAdmin(admin.ModelAdmin):
 
 @admin.register(Dogovor)
 class DogovorAdmin(admin.ModelAdmin):
-    list_display = ('number', 'date_of_conclusion', 'payment_form', 'abiturient', 'roditel_zakazchik')
+    list_display = ('number', 'date_of_conclusion', 'payment_form', 'is_paid', 'abiturient', 'roditel_zakazchik')
+    list_filter = ('payment_form', 'date_of_conclusion', 'maternity_capital', 'credit', 'is_paid') # <--- добавили is_paid
     search_fields = ('number', 'abiturient__fio', 'roditel_zakazchik__fio')
-    list_filter = ('payment_form', 'date_of_conclusion', 'maternity_capital', 'credit')
     list_per_page = 25
     autocomplete_fields = ['abiturient', 'roditel_zakazchik']
     list_select_related = ('abiturient', 'roditel_zakazchik')

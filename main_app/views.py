@@ -13,10 +13,16 @@ from django.contrib.auth import logout
 from django.contrib.auth.views import LoginView
 from django.db import transaction
 from django.db.models import Q
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse
 from django import forms
 from dal_select2.views import Select2QuerySetView 
 from django.utils import timezone
+from django.db import models
+from docxtpl import DocxTemplate
+import os
+from django.conf import settings
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponse 
+
 
 # Импорты моделей
 from .models import (
@@ -43,16 +49,13 @@ def report_center(request):
 
 def generate_report_view(request):
     """Генерация отчета по фильтрам"""
-    # Получаем данные из GET-запроса
     status = request.GET.get('status')
     specialty_id = request.GET.get('specialty')
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
 
-    # Стартовый запрос
     abiturients = Abiturient.objects.all()
 
-    # Фильтруем
     if status:
         abiturients = abiturients.filter(status=status)
     if specialty_id:
@@ -85,7 +88,6 @@ class StaffRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         return is_staff_check(self.request.user)
 
-# Formset для документов
 DocumentFormSet = inlineformset_factory(
     Abiturient,
     Document,
@@ -110,6 +112,7 @@ def logout_view(request):
     logout(request)
     messages.info(request, "Вы вышли из системы.")
     return redirect('login')
+
 
 # ---------------------------
 # Главная панель (Dashboard)
@@ -153,6 +156,7 @@ class StudentListView(AbiturientListView):
 
     def get_queryset(self):
         return Abiturient.objects.filter(status='student')
+
 class AbiturientDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
     model = Abiturient
     template_name = 'main_app/abiturient_detail.html'
@@ -211,7 +215,14 @@ class AbiturientFormViewMixin(LoginRequiredMixin, StaffRequiredMixin):
 
         if all([form.is_valid(), m_form.is_valid(), f_form.is_valid(), h_form.is_valid(), formset.is_valid()]):
             with transaction.atomic():
-                abiturient = form.save()
+                abiturient = form.save(commit=False)
+                
+                if not abiturient.reg_number:
+                    last_number = Abiturient.objects.aggregate(models.Max('reg_number'))['reg_number__max'] or 0
+                    abiturient.reg_number = last_number + 1
+                
+                abiturient.save()
+
                 for r_form, r_type in [(m_form, 'мать'), (f_form, 'отец')]:
                     if r_form.cleaned_data.get('fio') or r_form.cleaned_data.get('phone'):
                         parent = r_form.save()
@@ -265,25 +276,20 @@ class DogovorCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
         return initial
 
     def form_valid(self, form):
-        # 1. Сохраняем договор (вызываем стандартное поведение)
         response = super().form_valid(form)
         
-        # 2. Получаем абитуриента, с которым заключили договор
         abiturient = self.object.abiturient
         
-        # 3. Если он еще не студент — переводим его в студенты
         if abiturient.status == 'abiturient':
             abiturient.status = 'student'
             abiturient.enrollment_date = timezone.now().date()
             abiturient.save()
             
-            # Добавляем красивое уведомление
             messages.success(self.request, f"Договор сохранен! {abiturient.fio} автоматически зачислен(а) в студенты.")
         else:
             messages.success(self.request, "Договор успешно добавлен.")
             
         return response
-    # -----------------------
 
     def get_success_url(self):
         return reverse_lazy('abiturient_detail', kwargs={'pk': self.object.abiturient.pk})
@@ -320,7 +326,6 @@ def enroll_student(request, pk):
             messages.success(request, f"{student.fio} официально зачислен в группу {student.student_group}!")
             return redirect('abiturient_detail', pk=pk)
     
-    # Если зашли просто так (GET), перекинем обратно
     return redirect('abiturient_detail', pk=pk)
 
 # --------------------
@@ -364,7 +369,6 @@ def search_students(request):
     q = request.GET.get('q', '').strip()
     results = []
     if q:
-        # Ищем абитуриентов и студентов (исключая отчисленных)
         abits = Abiturient.objects.filter(
             Q(fio__icontains=q) | Q(phone__icontains=q)
         ).exclude(status='expelled')[:5]
@@ -441,3 +445,108 @@ def get_abit_info_ajax(request, abit_id):
         'status': abit.status,
         'status_display': abit.get_status_display()
     })
+
+
+# =============================================================
+# Генерация договора
+# =============================================================
+
+# Сроки обучения: ключ = (код специальности, класс поступления)
+# Значение = (продолжительность, период обучения)
+# Если добавишь новую специальность — просто допиши строку сюда
+STUDY_DURATIONS = {
+    ('09.02.07', '9'):  ('3 года 10 месяцев', 'с 01.09.2026 по 30.06.2030'),
+    ('09.02.07', '11'): ('2 года 10 месяцев', 'с 01.09.2026 по 30.06.2029'),
+    ('54.02.01', '9'):  ('3 года 10 месяцев', 'с 01.09.2026 по 30.06.2030'),
+    ('54.02.01', '11'): ('1 год 10 месяцев',  'с 01.09.2026 по 30.06.2028'),
+}
+
+# Названия форм оплаты для договора
+PAYMENT_FORM_LABELS = {
+    'monthly':  '10 частей в учебном году',
+    'semester': '2 части в учебном году',
+    'yearly':   '1 часть в учебном году',
+}
+
+# Размер первого платежа по форме оплаты
+FIRST_PAYMENT = {
+    'monthly':  '77 000',
+    'semester': '182 875',
+    'yearly':   '346 500',
+}
+
+
+@login_required
+@user_passes_test(is_staff_check)
+def download_dogovor_docx(request, pk):
+    dogovor = get_object_or_404(Dogovor, pk=pk)
+    abit = dogovor.abiturient
+
+    template_path = os.path.join(
+        settings.BASE_DIR, 'main_app', 'templates',
+        'templates_doc', 'dogovor_blagov_template.docx'
+    )
+
+    doc = DocxTemplate(template_path)
+
+    # --- Специальность ---
+    spec = abit.specialnost
+    specialty_code = spec.code if spec else '___'
+    specialty_name = spec.name if spec else '___________'
+
+    # --- Срок обучения (зависит от специальности и класса поступления) ---
+    key = (specialty_code, abit.class_of_entry)
+    study_duration, study_period = STUDY_DURATIONS.get(
+        key, ('___ лет ___ месяцев', 'с __.__.20__ по __.__.20__')
+    )
+
+    # --- Заказчик (родитель или сам абитуриент если нет родителя) ---
+    zakazchik = dogovor.roditel_zakazchik
+    customer_fio   = zakazchik.fio     if zakazchik else '____________'
+    customer_addr  = zakazchik.address if zakazchik else abit.address
+    customer_phone = zakazchik.phone   if zakazchik else abit.phone
+    customer_email = zakazchik.email   if zakazchik else abit.email
+
+    # --- Форма оплаты и первый платёж ---
+    payment_form_label = PAYMENT_FORM_LABELS.get(dogovor.payment_form, dogovor.get_payment_form_display())
+    first_sum = FIRST_PAYMENT.get(dogovor.payment_form, '___')
+
+    context = {
+        'dogovor_number':  dogovor.number,
+        'currentdate':     dogovor.date_of_conclusion.strftime('%d.%m.%Y'),
+
+        # Специальность и сроки — подставляются автоматически из карточки абитуриента
+        'specialty_code':  specialty_code,
+        'specialty_name':  specialty_name,
+        'study_duration':  study_duration,
+        'study_period':    study_period,
+
+        # Обучающийся
+        'listener':        abit.fio,
+        'datebirth':       abit.date_of_birth.strftime('%d.%m.%Y'),
+
+        # Заказчик
+        'customer_fio':    customer_fio,
+        'address':         customer_addr  or '____________',
+        'mobphone':        customer_phone or '____________',
+        'email':           customer_email or '____________',
+
+        # Паспортные данные впишут вручную после печати
+        'cpasport':        '________________',
+        'cpassissued':     '________________',
+
+        # Оплата
+        'payment_form':    payment_form_label,
+        'discount_sum':    '___',  # менеджер вписывает вручную
+        'first_sum':       first_sum,
+    }
+
+    doc.render(context)
+
+    filename = f'Dogovor_{dogovor.number}_{abit.fio.split()[0]}.docx'
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    doc.save(response)
+    return response
