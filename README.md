@@ -35,3 +35,4 @@
 ```bash
 git clone https://github.com/Fizzy423/academy-top.git
 cd academy-top
+"# deploy" 
