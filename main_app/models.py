@@ -40,9 +40,14 @@ class Specialnost(models.Model):
     name = models.CharField(max_length=255, unique=True, verbose_name="Название специальности")
     code = models.CharField(max_length=50, unique=True, null=True, blank=True, verbose_name="Код специальности")
     description = models.TextField(blank=True, verbose_name="Описание")
+    limit = models.PositiveIntegerField(default=16, verbose_name="Лимит мест")
 
     def __str__(self):
         return f"{self.code if self.code else 'Без кода'} - {self.name}" 
+    
+    def has_places(self):
+        enrolled_count = self.abiturient_set.filter(status='student').count()
+        return enrolled_count < self.limit
 
     class Meta:
         verbose_name = "Специальность"

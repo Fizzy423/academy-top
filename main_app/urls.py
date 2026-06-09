@@ -4,6 +4,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
+from django.contrib.auth.decorators import user_passes_test 
 from . import reports
 
 
@@ -24,6 +25,12 @@ from main_app.views import (
     download_dogovor_docx, 
     enroll_student 
 )
+
+def superuser_only(user):
+    return user.is_authenticated and user.is_superuser
+
+# Переопределяем вход в админку: если не суперпользователь — перекидываем на логин или главную
+admin.site.login = user_passes_test(superuser_only, login_url='/login/')(admin.site.login)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

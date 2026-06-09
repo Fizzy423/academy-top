@@ -1,4 +1,5 @@
 # main_app/views.py
+# main_app/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -13,7 +14,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.views import LoginView
 from django.db import transaction
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponse 
 from django import forms
 from dal_select2.views import Select2QuerySetView 
 from django.utils import timezone
@@ -21,8 +22,7 @@ from django.db import models
 from docxtpl import DocxTemplate
 import os
 from django.conf import settings
-from django.http import JsonResponse, HttpResponseForbidden, HttpResponse 
-
+from django.core.exceptions import PermissionDenied
 
 # Импорты моделей
 from .models import (
@@ -36,46 +36,6 @@ from .forms import (
     StudentEnrollForm  
 )
 
-def report_center(request):
-    """Страница выбора параметров отчета"""
-    specialties = Specialnost.objects.all()
-    statuses = Abiturient.STATUS_CHOICES
-    
-    context = {
-        'specialties': specialties,
-        'statuses': statuses,
-    }
-    return render(request, 'main_app/reports/report_center.html', context)
-
-def generate_report_view(request):
-    """Генерация отчета по фильтрам"""
-    status = request.GET.get('status')
-    specialty_id = request.GET.get('specialty')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-
-    abiturients = Abiturient.objects.all()
-
-    if status:
-        abiturients = abiturients.filter(status=status)
-    if specialty_id:
-        abiturients = abiturients.filter(specialnost_id=specialty_id)
-    if date_from:
-        abiturients = abiturients.filter(enrollment_date__gte=date_from)
-    if date_to:
-        abiturients = abiturients.filter(enrollment_date__lte=date_to)
-
-    context = {
-        'abiturients': abiturients,
-        'generated_date': timezone.now(),
-        'total_count': abiturients.count(),
-        'by_class': {
-            '9': abiturients.filter(class_of_entry='9').count(),
-            '11': abiturients.filter(class_of_entry='11').count(),
-        }
-    }
-    return render(request, 'main_app/reports/abiturient_report.html', context)
-
 # -----------------------------
 # Вспомогательные функции и миксины
 # -----------------------------
@@ -88,6 +48,13 @@ class StaffRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         return is_staff_check(self.request.user)
 
+# Миксин для проверки прав менеджера (если нужно)
+def is_manager_check(user):
+    return user.groups.filter(name='Менеджер').exists()
+
+# -----------------------------
+# Формсеты
+# -----------------------------
 DocumentFormSet = inlineformset_factory(
     Abiturient,
     Document,
@@ -113,6 +80,16 @@ def logout_view(request):
     messages.info(request, "Вы вышли из системы.")
     return redirect('login')
 
+# ---------------------------
+# Специальности (Администрирование)
+# ---------------------------
+class SpecialnostUpdateView(StaffRequiredMixin, UserPassesTestMixin):
+    def test_func(self):
+        # Только суперпользователь может редактировать специальности
+        return self.request.user.is_superuser
+    
+    def handle_no_permission(self):
+        raise PermissionDenied("У вас нет прав на редактирование специальностей.")
 
 # ---------------------------
 # Главная панель (Dashboard)
@@ -132,7 +109,7 @@ def dashboard(request):
     return render(request, 'main_app/dashboard.html', context)
 
 # -----------------------------
-# Список и фильтры абитуриентов
+# Абитуриенты и студенты
 # -----------------------------
 class AbiturientFilter(django_filters.FilterSet):
     fio = django_filters.CharFilter(lookup_expr='icontains', label='ФИО')
@@ -150,7 +127,6 @@ class AbiturientListView(LoginRequiredMixin, StaffRequiredMixin, FilterView):
     context_object_name = 'abiturients'
 
 class StudentListView(AbiturientListView):
-    """Список только тех, кто уже зачислен (статус 'student')"""
     template_name = 'main_app/student_list.html' 
     context_object_name = 'students'
 
@@ -166,7 +142,6 @@ class AbiturientDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
         context['health_info'] = getattr(self.object, 'health_info', None)
         context['documents'] = self.object.documents.all()
         context['dogovors'] = self.object.dogovors.all()
-        
         parent_relations = AbiturientRoditel.objects.filter(abiturient=self.object).select_related('roditel')
         context['mother_info'] = next((r.roditel for r in parent_relations if r.relation_type.lower() == 'мать'), None)
         context['father_info'] = next((r.roditel for r in parent_relations if r.relation_type.lower() == 'отец'), None)
@@ -276,20 +251,25 @@ class DogovorCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
         return initial
 
     def form_valid(self, form):
-        response = super().form_valid(form)
-        
+
+        self.object = form.save(commit=False)
         abiturient = self.object.abiturient
+        
+        if abiturient.specialnost and not abiturient.specialnost.has_places():
+            messages.error(self.request, f"Ошибка: На специальности '{abiturient.specialnost.name}' не осталось свободных мест!")
+            return self.form_invalid(form)
+
+        self.object.save()
         
         if abiturient.status == 'abiturient':
             abiturient.status = 'student'
             abiturient.enrollment_date = timezone.now().date()
             abiturient.save()
-            
             messages.success(self.request, f"Договор сохранен! {abiturient.fio} автоматически зачислен(а) в студенты.")
         else:
             messages.success(self.request, "Договор успешно добавлен.")
             
-        return response
+        return redirect(self.get_success_url())
 
     def get_success_url(self):
         return reverse_lazy('abiturient_detail', kwargs={'pk': self.object.abiturient.pk})
