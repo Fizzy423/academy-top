@@ -18,7 +18,27 @@ if not SECRET_KEY:
     else:
         raise ValueError("DJANGO_SECRET_KEY must be set in production!")
 
+# Чтение хостов из окружения
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',')
+
+# Автоматически добавляем локальные хосты и адреса туннеля для удобства тестирования
+if '*' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.extend([
+        'localhost', 
+        '127.0.0.1', 
+        '.xtunnel.ru', 
+        '.tunnel4.com',
+        '.fxtun.ru'
+    ])
+
+# Доверенные источники для работы CSRF (необходимо для отправки форм и входа через xTunnel)
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.xtunnel.ru',
+    'https://*.fxtun.ru',
+    'https://*.tunnel4.com',  
+    'http://localhost:5031',
+    'http://127.0.0.1:5031',
+]
 
 # --- 2. ПРИЛОЖЕНИЯ ---
 INSTALLED_APPS = [
@@ -80,7 +100,7 @@ DATABASES = {
         'NAME': os.environ.get('DB_NAME'),
         'USER': os.environ.get('DB_USER'),
         'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),  # Теперь совпадает с .env
+        'HOST': os.environ.get('DB_HOST'),  
         'PORT': os.environ.get('DB_PORT', '5432'),
         'OPTIONS': {
             'client_encoding': 'UTF8',
@@ -127,16 +147,16 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_SSL_REDIRECT = True
     X_FRAME_OPTIONS = 'DENY'
+    
+    # Позволяет Django корректно определять HTTPS-протокол за прокси-сервером туннеля
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # --- 9. ДОПОЛНИТЕЛЬНО ---
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# settings.py
-import tempfile
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-TMP_DIR = os.path.join(BASE_DIR, 'tmp')
+# --- 10. ВРЕМЕННЫЕ ДИРЕКТОРИИ ---
+TMP_DIR = str(BASE_DIR / 'tmp')
 if not os.path.exists(TMP_DIR):
     os.makedirs(TMP_DIR)
