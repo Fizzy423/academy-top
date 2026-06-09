@@ -1,0 +1,13 @@
+meta:
+  environment: python
+  toolchain:
+    name: pip
+    version: 3.10
+
+build:
+  requirementsPath: requirements.txt
+
+run:
+  persistenceMount: /data
+  # Сначала применяем миграции, потом собираем статику, потом запускаем сервер
+  script: python manage.py migrate && python manage.py collectstatic --noinput && gunicorn abiturient_project.wsgi:application --bind 0.0.0.0:80
