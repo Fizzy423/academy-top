@@ -26,7 +26,6 @@
 - **Backend**: Python 3.12, Django 6.0
 - **Database**: PostgreSQL
 - **Frontend**: Bootstrap 5, Django Crispy Forms
-- **Tools**: WhiteNoise (статика), Gunicorn (WSGI сервер)
 
 ## Как запустить проект локально
 
